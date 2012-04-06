@@ -4,19 +4,35 @@ SSEJ
 Pronouced "essay"
 
 # Maps
-$ ssej 'line.length' some_file haystack.log
-$ ssej 'Object.keys(JSON.parse(line))' hatstack.log
+$ ssej -m 'line.length' haystack.log
 
 # Parsers
-$ ssej --parser='JSON.parse' 'Object.keys(line)' haystack.log
+$ ssej -p JSON.parse -m Object.keys(line)  haystack.log
 
 # Filters
-$ ssej --filter='line.indexOf('needle')' 'line.length' haystack.log
-$ ssej --filter='line.json.event=="CLICK"'
+$ ssej -parser JSON.parse --filter 'line.indexOf('needle')' --map 'line.length' haystack.log
+$ ssej --filter line.event=="CLICK"
 
-# Reduce
-$ ssej --count='json.event_type'
-$ ssej --count='[json.event_type, json.referer]' logFiles
+# Group
+$ ssej -g line.event=="CLICK"
 
-# Reduce with labels
-$ssej --count=['json.event_type, {abbrev: json.refer.slice(0, 10)}]' myFiles
+# Count
+$ ssej --count vent.event hatstack.log
+$ ssej --count '[json.event_type, json.referer].join("-")' haystack.log
+
+
+TODO
+
+
+TODO
+----
+Default parser, 
+- get each line, Json.parse [DONE]
+- Aggregation: [DONE]
+  - count, sum, etc [DONE]
+- Reduce [DONE]
+- Custom accumulation [DONE]
+- General command line option parser [DONE]
+- Option loading from dotfiles
+    - Modules with support functions
+- JOIN

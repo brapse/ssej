@@ -1,15 +1,3 @@
-/*
- * TODO
- * ----
- * Default parser, 
- * - get each line, Json.parse
- * - General command line option parser
- * - instruction parsing
- * - Option loading from dotfiles
- *     - Modules with support functions
- *
- * */
-
 
 var program = require('commander'),
     LineStream = require('./lib/line_stream').LineStream,
@@ -20,7 +8,7 @@ sum = function (group) {
 }
 
 // From a predicate statement, return a filter function
-var generateFunc = function (predicate) {
+var extractFunc = function (predicate) {
     var funcText = 'return ' +  predicate + ';'
 
     return new(Function)('line', 'group', funcText);
@@ -39,24 +27,17 @@ var extractReduce = function (parseFunc) {
 }
 
 // return a hash function
-var extractAggregate = function (aggText) {
-    if (!/\[.*\]/.test(aggText)) {
-        aggText = '[' + aggText + ']';
-    }
 
-    var aggText = 'return ' + aggText + '.join("-")';
-
-    return new(Function)('line', aggText);
-};
-
+var identity = function (f) { return f };
 program
   .version('0.0.1')
   .usage('[options] <map statement> <file ...>')
-  .option('-f, --filter [statement]', 'filter statement', generateFunc, function () { return true})
-  .option('-m, --map [statement]', 'map statement', generateFunc, function (f) { return f})
-  .option('-c, --count [statement]', 'count statement', extractAggregate)
-  .option('-c, --group [statement]', 'group statement', extractAggregate)
-  .option('-c, --reduce [statement]', 'group statement', extractReduce)
+  .option('-f, --filter [statement]', 'filter statement', extractFunc, function () { return true})
+  .option('-m, --map [statement]', 'map statement', extractFunc, identity)
+  .option('-c, --count [statement]', 'count statement', extractFunc)
+  .option('-c, --group [statement]', 'group statement', extractFunc)
+  .option('-s, --store [statement]', 'specify what to store in groups', extractFunc, identity)
+  .option('-c, --reduce [statement]', 'group statement', extractReduce, identity)
   .option('-p, --parser [parseFunc]', 'a parser function, like JSON.parse maybe', generateParseFunc, function (f) { return f})
   .parse(process.argv);
 
@@ -86,21 +67,23 @@ var inputStream = (function () {
     if (inputFiles.length > 0) {
         return new(AggregateFiles)(inputFiles)
     } else {
+        process.stdin.resume();
+        process.stdin.setEncoding('utf8');
         return process.stdin;
     }
 })();
 
-
 var lineStream = new LineStream;
 inputStream.pipe(lineStream);
 
-var accumulate = {};
 var groups = {};
 
 if (program.count) {
-    lineStream.on('end', function () {
-        console.log(accumulate);
-    });
+    program.group = program.count;
+    program.store = function (e) { return 1 };
+    program.reduce = function (group) {
+        return group.reduce(function(sum, i) { return sum + i }, 0);
+    }
 };
 
 if (program.group) {
@@ -109,6 +92,7 @@ if (program.group) {
         Object.keys(groups).forEach(function (key) {
             result[key] = program.reduce(groups[key]);
         });
+
         console.log(result);
     });
 };
@@ -116,20 +100,13 @@ if (program.group) {
 lineStream.on('data', function (line) {
     var parsed = program.parser(line);
     if (program.filter(parsed)) {
-        if (program.count) {
-            var key = program.count(parsed);
-            if (accumulate[key]) {
-                accumulate[key] += 1;
-            } else {
-                accumulate[key] = 1;
-            }
-        } else if(program.group) {
+        if(program.group) {
             var key = program.group(parsed);
             if (!groups[key]) {
                 groups[key] = []
             }
 
-            groups[key].push(parsed);
+            groups[key].push(program.store(parsed));
         } else {
             console.log(program.map(parsed));
         }
