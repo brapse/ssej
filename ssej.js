@@ -1,13 +1,7 @@
-
 var program = require('commander'),
     LineStream = require('./lib/line_stream').LineStream,
     AggregateFiles = require('./lib/aggregate_files').AggregateFiles;
 
-sum = function (group) {
-    return group.reduce(function (accu, e) { return  accu + e }, 0);
-}
-
-// From a predicate statement, return a filter function
 var extractFunc = function (predicate) {
     var funcText = 'return ' +  predicate + ';'
 
@@ -26,23 +20,20 @@ var extractReduce = function (parseFunc) {
     return new(Function)('group', funcText);
 }
 
-// return a hash function
 
 var identity = function (f) { return f };
+
 program
   .version('0.0.1')
   .usage('[options] <map statement> <file ...>')
   .option('-f, --filter [statement]', 'filter statement', extractFunc, function () { return true})
   .option('-m, --map [statement]', 'map statement', extractFunc, identity)
-  .option('-c, --count [statement]', 'count statement', extractFunc)
-  .option('-c, --group [statement]', 'group statement', extractFunc)
+  .option('-c, --count [statement]', 'count [statement]', extractFunc, extractFunc('line'))
+  .option('-g, --group [statement]', 'group by [statement]', extractFunc)
   .option('-s, --store [statement]', 'specify what to store in groups', extractFunc, identity)
-  .option('-c, --reduce [statement]', 'group statement', extractReduce, identity)
+  .option('-r, --reduce [statement]', 'reduce each group by [statement]', extractReduce, identity)
   .option('-p, --parser [parseFunc]', 'a parser function, like JSON.parse maybe', generateParseFunc, function (f) { return f})
   .parse(process.argv);
-
-// ssej --filter='something' myFile
-// cat some_dir_*|ssej 'line.length'
 
 var determineFiles = function (files) {
     var notFound = files.filter(function (file) {
@@ -90,10 +81,8 @@ if (program.group) {
     lineStream.on('end', function () {
         var result = {};
         Object.keys(groups).forEach(function (key) {
-            result[key] = program.reduce(groups[key]);
+            console.log(JSON.stringify({group: key, value: program.reduce(groups[key])}));
         });
-
-        console.log(result);
     });
 };
 
