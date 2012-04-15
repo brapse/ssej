@@ -10,7 +10,7 @@ $ ssej -m 'line.length' haystack.log
 $ ssej -p JSON.parse -m Object.keys(line)  haystack.log
 
 # Filters
-$ ssej -parser JSON.parse --filter 'line.indexOf('needle')' --map 'line.length' haystack.log
+$ sej -parser JSON.parse --filter 'line.indexOf('needle')' --map 'line.length' haystack.log
 $ ssej --filter line.event=="CLICK"
 
 # Group
