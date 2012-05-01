@@ -4,9 +4,18 @@ var streams = require('./lib/streams');
 var LineStream = streams.LineStream,
     Map = streams.Map,
     Filter = streams.Filter,
-    Group = streams.Group;
+    Group = streams.Group,
+    Reduce = streams.Reduce,
+    ProxyStream = streams.ProxyStream;
 
+var program = require('./lib/configuration').program;
 var args = process.argv.slice(2); // get the arguments portion
+
+var extractStream = function (text) {
+  return  eval(text);
+};
+
+extractStream.init = false;
 
 var options = {
     '-m': Map,
@@ -14,9 +23,16 @@ var options = {
     '-f': Filter,
     '--filter': Filter,
     '-g': Group,
-    '--group': Group
+    '--group': Group,
+    '-s': ProxyStream,
+    '--stream': ProxyStream,
+    '-r': Reduce,
+    '--reduce': Reduce
 };
 
+sum = function (arr) {
+  return arr.reduce(function (x,y) { return parseFloat(x) + (parseFloat(y))}, 0);
+}
 
 Object.prototype.only = function () {
     var n = {};
@@ -41,7 +57,7 @@ var inputFiles = [];
 for (var i=0; i < args.length; i++) {
     var op = operator(args[i]);
     if (op) {
-        pipeline.tail.pipe(new op(args[++i]));
+        pipeline.tail.pipe(new(op)(args[++i]));
     } else {
         inputFiles.push(args[i]);
     }
@@ -61,5 +77,15 @@ inputStream.pipe(pipeline.head);
 
 // Connect to output
 
+var util = require('util')
 console.warn('DEBUG', pipeline.debug());
-pipeline.tail.on('data', console.log);
+//pipeline.tail.on('data', console.log);
+//
+pipeline.tail.on('data', function (d) {
+  console.log(d);
+  //console.log(util.inspect(d, false, 5));
+});
+
+tsv = function (line) {
+  return line.split('\t');
+};
