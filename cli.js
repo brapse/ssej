@@ -82,7 +82,11 @@ console.warn('DEBUG', pipeline.debug());
 //pipeline.tail.on('data', console.log);
 //
 pipeline.tail.on('data', function (d) {
-  console.log(d);
+  if (typeof d === 'object') {
+    console.log(JSON.stringify(d));
+  }else {
+    console.log(d);
+  }
   //console.log(util.inspect(d, false, 5));
 });
 
