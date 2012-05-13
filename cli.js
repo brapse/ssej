@@ -9,13 +9,6 @@ var LineStream = streams.LineStream,
     ProxyStream = streams.ProxyStream;
 
 var program = require('./lib/configuration').program;
-var args = process.argv.slice(2); // get the arguments portion
-
-var extractStream = function (text) {
-  return  eval(text);
-};
-
-extractStream.init = false;
 
 var options = {
     '-m': Map,
@@ -30,21 +23,6 @@ var options = {
     '--reduce': Reduce
 };
 
-sum = function (arr) {
-  return arr.reduce(function (x,y) { return parseFloat(x) + (parseFloat(y))}, 0);
-}
-
-Object.prototype.only = function () {
-    var n = {};
-    var that = this;
-    var keys = Array.prototype.slice.apply(arguments);
-    keys.forEach(function (k) {
-        n[k] = that[k];
-    });
-
-    return n;
-}
-
 var operator = function (flag) {
     return Object.keys(options).reduce(function (_, k) {
         return k === flag ? options[k] : _;
@@ -53,6 +31,8 @@ var operator = function (flag) {
 
 var pipeline = new LineStream;
 var inputFiles = [];
+
+var args = process.argv.slice(2); // get the arguments portion
 
 for (var i=0; i < args.length; i++) {
     var op = operator(args[i]);
@@ -79,17 +59,13 @@ inputStream.pipe(pipeline.head);
 
 var util = require('util')
 console.warn('DEBUG', pipeline.debug());
-//pipeline.tail.on('data', console.log);
-//
+
+// output
 pipeline.tail.on('data', function (d) {
   if (typeof d === 'object') {
     console.log(JSON.stringify(d));
   }else {
     console.log(d);
   }
-  //console.log(util.inspect(d, false, 5));
 });
 
-tsv = function (line) {
-  return line.split('\t');
-};
