@@ -1,5 +1,7 @@
 var AggregateFiles = require('./lib/aggregate_files').AggregateFiles;
 
+var helpers = require('./lib/helpers');
+
 var streams = require('./lib/streams');
 var LineStream = streams.LineStream,
     Map = streams.Map,
@@ -8,64 +10,61 @@ var LineStream = streams.LineStream,
     Reduce = streams.Reduce,
     ProxyStream = streams.ProxyStream;
 
-var program = require('./lib/configuration').program;
-
-var options = {
-    '-m': Map,
-    '--mapper': Map,
-    '-f': Filter,
-    '--filter': Filter,
-    '-g': Group,
-    '--group': Group,
-    '-s': ProxyStream,
-    '--stream': ProxyStream,
-    '-r': Reduce,
-    '--reduce': Reduce
-};
-
-var operator = function (flag) {
-    return Object.keys(options).reduce(function (_, k) {
-        return k === flag ? options[k] : _;
-    }, false);
-}
-
-var pipeline = new LineStream;
-var inputFiles = [];
+// Seperat the input files from the test
+// ssej -m line.length file_1 file_2 file_3
 
 var args = process.argv.slice(2); // get the arguments portion
 
-for (var i=0; i < args.length; i++) {
-    var op = operator(args[i]);
-    if (op) {
-        pipeline.tail.pipe(new(op)(args[++i]));
+var files = [],
+    definition = [];
+
+for (var i=1; i < args.length; i++) {
+    var flag = args[i-1];
+    if (flag && flag[0] !== '-') {
+        files.push(args[i]);
     } else {
-        inputFiles.push(args[i]);
+        definition.push([flag, args[i]]);
     }
 }
 
-var inputStream = (function () {
-    if (inputFiles.length > 0) {
-        return new(AggregateFiles)(inputFiles);
-    } else {
-        process.stdin.resume();
-        process.stdin.setEncoding('utf8');
-        return process.stdin;
-    }
-})();
 
-inputStream.pipe(pipeline.head);
+// XXX: extract pipeline options
 
-// Connect to output
+// If master
+// => Init entire flow
+// if Worker
+// => Init a raw pipeline
+var cluster = require('cluster');
 
-var util = require('util')
-console.warn('DEBUG', pipeline.debug());
+var handler = cluster.isMaster ? Flow : Pipeline;
+// Raw pipelines can either handle stdin or file reads
 
-// output
-pipeline.tail.on('data', function (d) {
-  if (typeof d === 'object') {
-    console.log(JSON.stringify(d));
-  }else {
-    console.log(d);
-  }
-});
+if (files.length > 0) {
+    handler.run(files);
+} else {
+    handler.run(process.stdin);
+    process.stdin.resume();
+}
 
+
+handler.open(input);
+
+
+/* Handling files vs handling stdin
+ * The flow will get all the files and schedule */
+ 
+/* Current Design
+ * clj executes master process with definition and input
+ * definition: [command, spec]
+ * input either a list of files or nothing (stdin)
+ *
+ * Master process initializes a flow
+ * Flow creates channels that can either run in parallel or serialized on master
+ * channels are either: Pipelines
+ *                      Workers
+ *
+ * Piplines are a bunch of Streams joined together, (Filter, Map, etc)
+ * Workers lunch child processes which run Piplines
+ * Workers round robin writes over child processes
+ *
+ * 
