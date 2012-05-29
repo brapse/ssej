@@ -2,16 +2,12 @@ var AggregateFiles = require('./lib/aggregate_files').AggregateFiles;
 
 var helpers = require('./lib/helpers');
 
-var streams = require('./lib/streams');
-var LineStream = streams.LineStream,
-    Map = streams.Map,
-    Filter = streams.Filter,
-    Group = streams.Group,
-    Reduce = streams.Reduce,
-    ProxyStream = streams.ProxyStream;
+var streams = require('./lib/streams'),
+    p = require('./lib/pipeline');
 
-// Seperat the input files from the test
-// ssej -m line.length file_1 file_2 file_3
+var Flow = p.Flow,
+    Pipeline = p.Pipeline;
+
 
 var args = process.argv.slice(2); // get the arguments portion
 
@@ -36,35 +32,26 @@ for (var i=1; i < args.length; i++) {
 // => Init a raw pipeline
 var cluster = require('cluster');
 
-var handler = cluster.isMaster ? Flow : Pipeline;
+isChild = typeof(process.env['NODE_CHANNEL_FD']) === 'string';
+if (isChild) {
+    //console.log('CHILD');
+    console.log(args);
+} else {
+    console.log('MASTER');
+    console.log(args);
+}
+
+var handler = new(isChild ? Pipeline : Flow)(definition);
 // Raw pipelines can either handle stdin or file reads
+//
 
 if (files.length > 0) {
-    handler.run(files);
+    handler.open(files);
 } else {
-    handler.run(process.stdin);
+    handler.open(process.stdin);
     process.stdin.resume();
 }
 
+// XXX Child processes arn't getting stdin
 
-handler.open(input);
-
-
-/* Handling files vs handling stdin
- * The flow will get all the files and schedule */
- 
-/* Current Design
- * clj executes master process with definition and input
- * definition: [command, spec]
- * input either a list of files or nothing (stdin)
- *
- * Master process initializes a flow
- * Flow creates channels that can either run in parallel or serialized on master
- * channels are either: Pipelines
- *                      Workers
- *
- * Piplines are a bunch of Streams joined together, (Filter, Map, etc)
- * Workers lunch child processes which run Piplines
- * Workers round robin writes over child processes
- *
- * 
+// Now we just need to direct the output to the right place
