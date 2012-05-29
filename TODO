@@ -1,0 +1,13 @@
+TODO
+----
+
+Default parser, 
+- get each line, Json.parse [DONE]
+- Aggregation: [DONE]
+  - count, sum, etc [DONE]
+- Reduce [DONE]
+- Custom accumulation [DONE]
+- General command line option parser [DONE]
+- Multicore
+- Option loading from dotfiles
+    - Modules with support functions
