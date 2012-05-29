@@ -6,17 +6,28 @@ ssej is a toy stream processesing tool you can use from the command line to work
 Usage
 -----
 
-# Maps
-$ cat /usr/share/dict/words|ssej -m 'line.length' 
+### Maps
 
-# Filters: list only short words
+```shell
+$ cat /usr/share/dict/words|ssej -m 'line.length'
+```
+### Filters: list only short words
+
+```shell
 $ cat /usr/share/dict/words|ssej -f 'line.length < 10'
+```
 
-# Group: split the dictionary into short and long words
+### Group: split the dictionary into short and long words
+
+```shell
 $ cat /usr/share/dict/words|ssej -g 'line.length < 10'
+```
 
-# Reduce: Group words by first letter, select longest word of group
+### Reduce: Group words by first letter, select longest word of group
+
+```shell
 $ cat /usr/share/dict/words|ssej -g "line[0]" -r "(p||'').length > c.length ? p : c"
+```
 
 Notes
 -----
