@@ -48,6 +48,9 @@ var input = (function  () {
         return new IPCChannel;
     } else {
         process.stdin.setEncoding('utf8');
+        process.stdin.on('end', function () {
+            console.log('STDIN END');
+        });
         var stdin = new(Tap)('STDIN', process.stdin);
         stdin.pipe(ls);
 
@@ -68,7 +71,7 @@ var outputHandler = (function () {
 
 input.on('end', function () {
     console.log('END OF INPUT');
-    pipeline.close();
+    //pipeline.close();
 });
 
 var title = isChild ? 'CHILD' : 'PARENT';
