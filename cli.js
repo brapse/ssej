@@ -7,7 +7,9 @@ var streams = require('./lib/streams'),
 
 var ConstructFlow= p.ConstructFlow,
     ConstructPipeline = p.ConstructPipeline,
-    IPCChannel = streams.IPCChannel;
+    IPCChannel = streams.IPCChannel,
+    Tap = streams.Tap,
+    Sink = streams.Sink;
 
 var args = process.argv.slice(2); // get the arguments portion
 
@@ -30,10 +32,8 @@ isChild = typeof(process.env['NODE_CHANNEL_FD']) === 'string';
 // Prepare pipe
 var pipeline = (function () {
     if (isChild) {
-        console.log('Constructing pipe');
         return ConstructPipeline(definition);
     } else {
-        console.log('Constructing Flow');
         return ConstructFlow(definition);
     }
 })();
@@ -42,17 +42,16 @@ var pipeline = (function () {
 var ls = new streams.LineStream;
 var input = (function  () {
     if (files.length > 0) {
-        console.log('INPUT FILES', process.pid);
         var aggFiles = new(AggregateFiles)(files);
         return aggFiles.pipe(ls);
     } else if (isChild) {
-        console.log('INPUT IPC', process.pid);
         return new IPCChannel;
     } else {
-        console.log('INPUT STDIN', process.pid);
         process.stdin.setEncoding('utf8');
+        var stdin = new(Tap)('STDIN', process.stdin);
+        stdin.pipe(ls);
+
         process.stdin.resume();
-        process.stdin.pipe(ls);
 
         return ls;
     }
@@ -61,11 +60,9 @@ var input = (function  () {
 // Setup output
 var outputHandler = (function () {
     if (isChild) {
-        console.log('OUTPUT IPC:', process.pid);
-        return process.send;
+        return new(Sink)('IPC OUT', process.send);
     } else {
-        console.log('OUTPUT stdout: ', process.pid);
-        return console.log;
+        return new(Sink)('STD OUT', console.log);
     }
 })();
 
@@ -73,6 +70,10 @@ input.on('end', function () {
     console.log('END OF INPUT');
     pipeline.close();
 });
-//console.log(pipeline);
-pipeline.on('data',outputHandler);
-input.pipe(pipeline);
+
+var title = isChild ? 'CHILD' : 'PARENT';
+
+input.pipe(pipeline.head);
+pipeline.tail.pipe(outputHandler);
+
+console.log(title, ':', pipeline.head.debug());
