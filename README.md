@@ -1,7 +1,7 @@
 SSEJ
 ====
 
-ssej is a toy stream processesing tool you can use from the command line to work with text.
+ssej is a multicore stream processesing tool you can use from the command line to work with text.
 
 Usage
 -----
