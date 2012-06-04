@@ -58,4 +58,6 @@ var title = isChild ? 'CHILD' : 'PARENT';
 input.pipe(pipeline.head);
 pipeline.tail.pipe(outputHandler);
 
-console.log(title, ':', pipeline.head.debug());
+if (program.flags.indexOf('-d') > -1) {
+    console.log(title, ':', pipeline.head.debug());
+}
