@@ -11,38 +11,25 @@ var ConstructFlow= p.ConstructFlow,
     Tap = streams.Tap,
     Sink = streams.Sink;
 
-var args = process.argv.slice(2); // get the arguments portion
-
-var files = [],
-    definition = [];
-
-// Parse args
-for (var i=1; i < args.length; i++) {
-    var flag = args[i-1];
-    if (flag && flag[0] !== '-') {
-        files.push(args[i]);
-    } else {
-        definition.push([flag, args[i]]);
-    }
-}
-
 // global for now
 isChild = typeof(process.env['NODE_CHANNEL_FD']) === 'string';
+
+var program = require('./lib/configuration').program;
 
 // Prepare pipe
 var pipeline = (function () {
     if (isChild) {
-        return ConstructPipeline(definition);
+        return ConstructPipeline(program.definition);
     } else {
-        return ConstructFlow(definition);
+        return ConstructFlow(program.definition);
     }
 })();
 
 // Prepare input
 var ls = new streams.LineStream;
 var input = (function  () {
-    if (files.length > 0) {
-        var aggFiles = new(AggregateFiles)(files);
+    if (program.files.length > 0) {
+        var aggFiles = new(AggregateFiles)(program.files);
         return aggFiles.pipe(ls);
     } else if (isChild) {
         return new IPCChannel;
