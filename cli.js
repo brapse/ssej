@@ -1,3 +1,4 @@
+
 var AggregateFiles = require('./lib/aggregate_files').AggregateFiles;
 
 var helpers = require('./lib/helpers');
@@ -5,14 +6,14 @@ var helpers = require('./lib/helpers');
 var streams = require('./lib/streams'),
     p = require('./lib/pipeline');
 
-var ConstructFlow= p.ConstructFlow,
+var ConstructFlow = p.ConstructFlow,
     ConstructPipeline = p.ConstructPipeline,
     IPCChannel = streams.IPCChannel,
     Tap = streams.Tap,
     Sink = streams.Sink;
 
 // global for now
-isChild = typeof(process.env['NODE_CHANNEL_FD']) === 'string';
+var isChild = typeof(process.env.NODE_CHANNEL_FD) === 'string';
 
 var program = require('./lib/configuration').program;
 
@@ -23,16 +24,16 @@ var pipeline = (function () {
     } else {
         return ConstructFlow(program.definition);
     }
-})();
+}());
 
 // Prepare input
-var ls = new streams.LineStream;
+var ls = new streams.LineStream();
 var input = (function  () {
     if (program.files.length > 0) {
         var aggFiles = new(AggregateFiles)(program.files);
         return aggFiles.pipe(ls);
     } else if (isChild) {
-        return new IPCChannel;
+        return new IPCChannel();
     } else {
         process.stdin.setEncoding('utf8');
         var stdin = new(Tap)('STDIN', process.stdin);
@@ -42,7 +43,7 @@ var input = (function  () {
 
         return ls;
     }
-})();
+}());
 
 // Setup output
 var outputHandler = (function () {
@@ -51,7 +52,7 @@ var outputHandler = (function () {
     } else {
         return new(Sink)('STD OUT', console.log);
     }
-})();
+}());
 
 var title = isChild ? 'CHILD' : 'PARENT';
 
