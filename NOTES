@@ -1,9 +1,9 @@
 /* Terms:
- * Definition: tupple representation of the pipeline
+ * Definition: tuple representation of the pipeline
  * Pipe: individual section of a pipeline
  * sequence of pipes that run serially
  * Channel: single pipeline that operates in parallel
- * Naitive: Unparallizable sections that run on the main thread
+ * Native: Unparallelizable sections that run on the main thread
  * Worker: Portions of the flow that run in worker processes
  * Demultiplexer: Combine output of two channels
  * Multiplexer: Split the output a pipe into two channels
@@ -15,9 +15,9 @@
    Definition comes in, Flow goes out
    ...
    - Convert definition into a collection of pipes
-   - Group pipes into collection sections parallizable flow
+   - Group pipes into collection sections parallelizable flow
    - Launch workers with parallel channels
-   - Launch naitive sections
+   - Launch native sections
    - Init Multiplexers and Demultiplexers between channels (connect the pipes)
    - Connect input streams
 */
@@ -32,7 +32,7 @@
 // parallel by file
 // Parallel by round robin
 
-/* Multicore 
+/* Multicore
  * In the easiest case, multiple files are sent to multiple process
  * Each which simply pipe to the same output
  *
@@ -43,22 +43,22 @@
  * avoid parsing a bunch of json all the time.
  * A message message protocol can be used that specifies the deserialization mechanism
  * in cases of primitives (strings, ints, float) this can be as simple as parseInt etc
- * In cases of Object this will have to be Json.parse
+ * In cases of Object this will have to be JSON.parse
  *
  * So, from the initial cli, spawn workers a pool of workers and distribute files over
  * them via a queue.
  *
- * on parsing the CLI, find teh reduce and somehow notify the workeres that they have to
+ * on parsing the CLI, find the reduce and somehow notify the workers that they have to
  * redirect their results into the same reducer
  *
- * by Default this should work, another option should be to specify a combiner 
+ * by Default this should work, another option should be to specify a combiner
  * Allows worker processes to reduce and combine their results at the very end.
  * Pushing off serialization
  *
  * What about in cases of multiple reducers
  * + The pipe needs to be segmented into potions that in can run in parallel
  * + The underlying structure should be smart enough to suggest which portions can be run
- * in parallel. 
+ * in parallel.
  *
  * So, given a pipeline structure, and a bunch of files (or data) compose a graph
  * for parallel processing
