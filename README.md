@@ -1,7 +1,7 @@
 SSEJ
 ====
 
-ssej is a multicore stream processesing tool you can use from the command line to work with text.
+ssej is a multicore stream processing tool you can use from the command line to work with text.
 
 Usage
 -----
@@ -32,7 +32,7 @@ $ cat /usr/share/dict/words|ssej -g "line[0]" -r "(p||'').length > c.length ? p 
 Notes
 -----
 
-Pronouced "essay"
+Pronounced "essay"
 
 License
 -------
