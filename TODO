@@ -1,8 +1,8 @@
 TODO
 ----
 
-Default parser, 
-- get each line, Json.parse [DONE]
+Default parser,
+- get each line, JSON.parse [DONE]
 - Aggregation: [DONE]
   - count, sum, etc [DONE]
 - Reduce [DONE]
