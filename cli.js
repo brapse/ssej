@@ -1,8 +1,6 @@
 
 var AggregateFiles = require('./lib/aggregate_files').AggregateFiles;
 
-var helpers = require('./lib/helpers');
-
 var streams = require('./lib/streams'),
     p = require('./lib/pipeline');
 
