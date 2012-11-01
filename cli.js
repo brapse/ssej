@@ -11,7 +11,7 @@ var ConstructFlow = p.ConstructFlow,
     Sink = streams.Sink;
 
 // global for now
-var isChild = typeof(process.env.NODE_CHANNEL_FD) === 'string';
+var isChild = process.env['SSEJ_CHILD'] == 'true';
 
 var program = require('./lib/configuration').program;
 
@@ -46,7 +46,9 @@ var input = (function  () {
 // Setup output
 var outputHandler = (function () {
     if (isChild) {
-        return new(Sink)('IPC OUT', process.send);
+        return new(Sink)('IPC OUT', function (data) {
+            process.send(data);
+        });
     } else {
         return new(Sink)('STD OUT', console.log);
     }
